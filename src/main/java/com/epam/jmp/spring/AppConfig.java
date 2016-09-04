@@ -1,28 +1,27 @@
 package com.epam.jmp.spring;
 
+import com.epam.jmp.spring.web.config.WebAppConfig;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.Database;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import springfox.documentation.builders.PathSelectors;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
-import java.time.LocalDate;
-import java.util.Properties;
 
 @Configuration
 @EnableTransactionManagement
 @ComponentScan("com.epam.jmp.spring")
-@PropertySource("classpath:db.properties")
 @EnableJpaRepositories("com.epam.jmp.spring.repository")
+@Import(value = WebAppConfig.class)
 public class AppConfig {
 
     @Resource
@@ -34,14 +33,17 @@ public class AppConfig {
 
     @Bean
     public DataSource dataSource() {
-        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2)
+                .addScripts("schema.sql", "data.sql").build();
+    }
 
-        dataSource.setDriverClassName(env.getProperty("db.driver"));
-        dataSource.setUrl(env.getProperty("db.url"));
-        dataSource.setUsername(env.getProperty("db.username"));
-        dataSource.setPassword(env.getProperty("db.password"));
-
-        return dataSource;
+    @Bean
+    public JpaVendorAdapter jpaVendorAdapter() {
+        HibernateJpaVendorAdapter bean = new HibernateJpaVendorAdapter();
+        bean.setDatabase(Database.H2);
+        bean.setGenerateDdl(false);
+        bean.setShowSql(true);
+        return bean;
     }
 
     @Bean
@@ -50,18 +52,9 @@ public class AppConfig {
         entityManagerFactoryBean.setDataSource(dataSource());
         entityManagerFactoryBean.setPersistenceProviderClass(HibernatePersistenceProvider.class);
         entityManagerFactoryBean.setPackagesToScan("com.epam.jmp.spring.model");
-
-        entityManagerFactoryBean.setJpaProperties(hibernateProperties());
+        entityManagerFactoryBean.setJpaVendorAdapter(jpaVendorAdapter());
 
         return entityManagerFactoryBean;
-    }
-
-    private Properties hibernateProperties() {
-        Properties properties = new Properties();
-        properties.put("hibernate.dialect", env.getProperty("hibernate.dialect"));
-        properties.put("hibernate.show_sql", env.getProperty("hibernate.show_sql"));
-        properties.put("hibernate.hbm2ddl.import_files", env.getProperty("hibernate.hbm2ddl.import_files"));
-        return properties;
     }
 
     @Bean
@@ -69,16 +62,5 @@ public class AppConfig {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
         return transactionManager;
-    }
-
-    @Bean
-    public Docket api() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .directModelSubstitute(LocalDate.class, String.class)
-                .forCodeGeneration(true)
-                .select()
-                .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.any())
-                .build();
     }
 }

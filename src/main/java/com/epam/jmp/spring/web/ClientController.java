@@ -17,11 +17,10 @@ import java.util.List;
 @RequestMapping(value = "/api/v1/client", headers = "Accept=application/json;charset=utf-8")
 public class ClientController {
 
-
     @Autowired
     private ClientService clientService;
 
-    @RequestMapping(value = {"", "/"}, method = RequestMethod.GET)
+    @RequestMapping(method = RequestMethod.GET)
     @ResponseBody
     public ExtResponse getClientList() {
         try {
