@@ -7,7 +7,7 @@ import java.time.LocalDate;
 public class Reservation {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long number;
 
     @Column(name = "FILM_NAME")
