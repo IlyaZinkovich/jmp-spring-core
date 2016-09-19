@@ -1,5 +1,6 @@
 package com.epam.jmp.spring.web;
 
+import com.epam.jmp.spring.exceptions.ClientNotFoundException;
 import com.epam.jmp.spring.model.Client;
 import com.epam.jmp.spring.service.ClientService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,9 @@ public class ClientController {
 
     @RequestMapping(path = "/{id}", method = RequestMethod.GET)
     public Client getClientById(@PathVariable(value = "id") Long id) {
-        return clientService.getClientById(id);
+        Client client = clientService.getClientById(id);
+        if (client == null) throw new ClientNotFoundException(id);
+        return client;
     }
 
     @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
