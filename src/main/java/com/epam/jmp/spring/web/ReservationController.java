@@ -16,9 +16,9 @@ public class ReservationController {
     private ReservationService reservationService;
 
     @RequestMapping(method = RequestMethod.GET)
-    public List<Reservation> getReservationList(@RequestParam(name = "date") LocalDate date) {
+    public List<Reservation> getReservationList(@RequestParam(name = "date") String date) {
         if (date == null) return reservationService.reservationAll();
-        return getReservationList(date);
+        return reservationService.findReservationsByDate(LocalDate.parse(date));
     }
 
     @RequestMapping(method = RequestMethod.POST)
